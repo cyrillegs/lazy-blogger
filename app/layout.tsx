@@ -18,6 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lazy Blogger",
   description: "Lazy Blogger is a modern and effortless blogging platform where creators share fresh ideas, tips, and stories with the community. Discover curated posts, explore diverse topics, and get inspired—all in one place.",
+  icons: "/favicon-lazy-blogger.ico",
 };
 
 export default function RootLayout({
