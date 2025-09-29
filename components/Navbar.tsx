@@ -8,7 +8,7 @@ const Navbar = () => {
   return (
       <nav className="flex items-center justify-between px-4 bg-white sticky top-0 z-50">
 
-        <Link href="/create"> 
+        <Link href="/"> 
           <div className="flex items-center gap-2.5 cursor-pointer">
             <Image src="/next.svg" alt="logo" width={46} height={44} />
           </div>
