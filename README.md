@@ -34,3 +34,51 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+---
+
+⚡ Basic Docker setup for Next.js
+
+1. Create a Dockerfile in /var/www/lazy-blogger:
+
+```dockerfile
+# Use official Node.js image
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install --production
+
+# Copy app source
+COPY . .
+
+# Build the app
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Start app
+CMD ["npm", "start"]
+```
+
+2. Build the Docker image
+
+```bash
+docker build -t lazy-blogger .
+```
+3. Run the container
+
+```bash
+docker run -d --name lazy-blogger -p 3000:3000 lazy-blogger
+```
+4. Optional: automatic restart
+
+```bash
+docker run -d --name lazy-blogger --restart=always -p 3000:3000 lazy-blogger
+```
