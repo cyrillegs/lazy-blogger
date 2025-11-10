@@ -37,7 +37,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ---
 
-⚡ Basic Docker setup for Next.js
+## ⚡ Basic Docker setup for Next.js
 
 1. Create a Dockerfile in /var/www/lazy-blogger:
 
@@ -82,3 +82,108 @@ docker run -d --name lazy-blogger -p 3000:3000 lazy-blogger
 ```bash
 docker run -d --name lazy-blogger --restart=always -p 3000:3000 lazy-blogger
 ```
+---
+
+## Step-by-Step Nginx Setup for Next.js (lazy-blogger)
+
+1️⃣ Install Nginx
+
+On Ubuntu/Debian:
+```
+sudo apt update
+sudo apt install nginx -y
+```
+
+Check status:
+```
+sudo systemctl status nginx
+```
+2️⃣ Configure Nginx for your app
+
+Create a new site configuration file:
+```
+sudo nano /etc/nginx/sites-available/lazy-blogger
+```
+Paste the following:
+```
+server {
+    server_name lazy-blogger.cyrildavelegaspi.online;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/lazy-blogger.cyrildavelegaspi.online/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/lazy-blogger.cyrildavelegaspi.online/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+    if ($host = lazy-blogger.cyrildavelegaspi.online) {
+        return 301 https://$host$request_uri;
+    }
+
+    listen 80;
+    server_name lazy-blogger.cyrildavelegaspi.online;
+    return 404;
+}
+```
+
+3️⃣ Enable the site
+```
+sudo ln -s /etc/nginx/sites-available/lazy-blogger /etc/nginx/sites-enabled/
+```
+
+4️⃣ Test Nginx configuration
+```
+sudo nginx -t
+```
+
+5️⃣ Reload Nginx
+```
+sudo systemctl reload nginx
+```
+
+6️⃣ Start your Next.js app
+- Manual start:
+```
+cd /var/www/lazy-blogger
+npm install
+npm run build
+npm start
+```
+
+- Docker start
+```
+docker build -t lazy-blogger .
+docker run -d --name lazy-blogger -p 3000:3000 --restart=always lazy-blogger
+```
+7️⃣ Verify
+```
+curl http://127.0.0.1:3000
+```
+- Should return your app’s HTML or JSON.
+
+Then open your browser:
+```
+https://lazy-blogger.cyrildavelegaspi.online/
+```
+8️⃣ Optional: Let’s Encrypt SSL
+Install Certbot (if not already):
+```
+sudo apt install certbot python3-certbot-nginx -y
+```
+Obtain certificate:
+```
+sudo certbot --nginx -d lazy-blogger.cyrildavelegaspi.online
+```
+Certbot will automatically update your Nginx config for SSL and redirect HTTP → HTTPS.
+
+✅ Now your lazy-blogger app is running securely via Nginx, either manually or inside Docker.
