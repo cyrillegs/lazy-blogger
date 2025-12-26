@@ -26,14 +26,16 @@ jobs:
         with:
           context: .
           push: true
-          tags: cyrillegs/lazy-blogger:latest
+          tags: |
+            cyrillegs/lazy-blogger:latest
+            cyrillegs/lazy-blogger:1.0.${{ github.run_number }}
           build-args: |
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
             CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      - name: SSH and deploy to VPS
+      - name: SSH and deploy to VPS with Docker Compose
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -43,14 +45,11 @@ jobs:
           script: |
             cd ~/docker/lazy-blogger
 
-            # Pull the latest image from Docker Hub
-            docker pull cyrillegs/lazy-blogger:latest
+            # Pull the latest image defined in docker-compose.yml
+            docker compose pull
 
-            # Stop and remove the old container
-            docker compose down
-
-            # Start container with the latest image
+            # Recreate containers with the updated image
             docker compose up -d --remove-orphans
 
-            # Optional: prune old images to save space
+            # Optional: clean up old images
             docker image prune -f
