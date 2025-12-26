@@ -28,7 +28,7 @@ const Page = async () => {
           </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
             <span className="bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-rose-500 bg-clip-text text-transparent">
-              Discover fresh ideas
+              Discover Fresh Ideas
             </span>
           </h1>
           <p className="mt-2 text-sm text-gray-600">
