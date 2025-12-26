@@ -24,7 +24,7 @@ const Page = async () => {
             href="/create"
             className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-600/90 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-indigo-600 transition-colors cursor-pointer"
           >
-            Create a blog
+            Create a Blog
           </Link>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
             <span className="bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-rose-500 bg-clip-text text-transparent">

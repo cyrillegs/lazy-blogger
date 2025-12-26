@@ -1,0 +1,45 @@
+name: CI/CD - Lazy Blogger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      # 3️⃣ Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t cyrillegs/lazy-blogger:latest .
+
+      # 4️⃣ Push Docker image
+      - name: Push Docker image
+        run: |
+          docker push cyrillegs/lazy-blogger:latest
+
+      # 5️⃣ SSH into VPS and deploy
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/docker/lazy-blogger
+            docker compose down
+            docker pull cyrillegs/lazy-blogger:latest
+            docker compose up -d
