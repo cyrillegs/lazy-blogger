@@ -6,40 +6,24 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
     steps:
-      # 1️⃣ Checkout repo
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      # 2️⃣ Log in to Docker Hub
-      - name: Log in to Docker Hub
+      - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3️⃣ Build Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t cyrillegs/lazy-blogger:latest .
-
-      # 4️⃣ Push Docker image
-      - name: Push Docker image
-        run: |
-          docker push cyrillegs/lazy-blogger:latest
-
-      # 5️⃣ SSH into VPS and deploy
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v0.1.9
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v5
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd ~/docker/lazy-blogger
-            docker compose down
-            docker pull cyrillegs/lazy-blogger:latest
-            docker compose up -d
+          push: true
+          tags: cyrillegs/lazy-blogger:latest
