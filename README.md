@@ -1,189 +1,193 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lazy Blogger - Dockerized Next.js App with CI/CD
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This repository contains the **Lazy Blogger** Next.js application, fully dockerized and deployed using **Docker Compose** and automated **CI/CD** with GitHub Actions. It includes integrations with **Clerk** (authentication) and **Supabase** (database).
 
 ---
 
-## ⚡ Basic Docker setup for Next.js
+## Features
 
-1. Create a Dockerfile in /var/www/lazy-blogger:
+- Next.js 15.x with Turbopack
+- Dockerized for consistent environments
+- Clerk authentication
+- Supabase backend
+- Automated CI/CD:
+  - Build & push Docker images to Docker Hub
+  - Pull latest image and deploy to VPS via SSH
+- Custom domain support
 
-```dockerfile
-# Use official Node.js image
-FROM node:20-alpine
-
-# Set working directory
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install --production
-
-# Copy app source
-COPY . .
-
-# Build the app
-RUN npm run build
-
-# Expose port
-EXPOSE 3000
-
-# Start app
-CMD ["npm", "start"]
-```
-
-2. Build the Docker image
-
-```bash
-docker build -t lazy-blogger .
-```
-3. Run the container
-
-```bash
-docker run -d --name lazy-blogger -p 3000:3000 lazy-blogger
-```
-4. Optional: automatic restart
-
-```bash
-docker run -d --name lazy-blogger --restart=always -p 3000:3000 lazy-blogger
-```
 ---
 
-## Step-by-Step Nginx Setup for Next.js (lazy-blogger)
+## Prerequisites
 
-1️⃣ Install Nginx
+- Docker & Docker Compose installed locally and on VPS
+- Docker Hub account
+- VPS with SSH access
+- GitHub repository for CI/CD
+- Clerk and Supabase accounts
 
-On Ubuntu/Debian:
-```
-sudo apt update
-sudo apt install nginx -y
-```
+---
 
-Check status:
-```
-sudo systemctl status nginx
-```
-2️⃣ Configure Nginx for your app
+## Environment Variables
 
-Create a new site configuration file:
-```
-sudo nano /etc/nginx/sites-available/lazy-blogger
-```
-Paste the following:
-```
-server {
-    server_name lazy-blogger.cyrildavelegaspi.online;
+Create a `.env` file with the following:
 
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/lazy-blogger.cyrildavelegaspi.online/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/lazy-blogger.cyrildavelegaspi.online/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-}
-
-server {
-    if ($host = lazy-blogger.cyrildavelegaspi.online) {
-        return 301 https://$host$request_uri;
-    }
-
-    listen 80;
-    server_name lazy-blogger.cyrildavelegaspi.online;
-    return 404;
-}
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<pk_here>
+CLERK_SECRET_KEY=<sk_here>
 ```
 
-3️⃣ Enable the site
-```
-sudo ln -s /etc/nginx/sites-available/lazy-blogger /etc/nginx/sites-enabled/
+> The `.env` file is **not committed** to GitHub for security. Secrets are injected via GitHub Actions.
+
+---
+
+## Docker Setup
+
+### Local Development
+
+1. Build and run the container locally:
+
+```bash
+docker compose build
+docker compose up -d
 ```
 
-4️⃣ Test Nginx configuration
-```
-sudo nginx -t
+2. Access the app at [http://localhost:3000](http://localhost:3000)
+
+3. Stop the container:
+
+```bash
+docker compose down
 ```
 
-5️⃣ Reload Nginx
-```
-sudo systemctl reload nginx
+---
+
+### Production on VPS
+
+1. Clone repo or pull Docker image:
+
+```bash
+docker pull cyrillegs/lazy-blogger:latest
 ```
 
-6️⃣ Start your Next.js app
-- Manual start:
-```
-cd /var/www/lazy-blogger
-npm install
-npm run build
-npm start
+2. Ensure you have a `docker-compose.yml` on the VPS:
+
+```yaml
+services:
+  lazy-blogger:
+    image: cyrillegs/lazy-blogger:latest
+    container_name: lazy-blogger
+    env_file: .env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
 ```
 
-- Docker start
-```
-docker build -t lazy-blogger .
-docker run -d --name lazy-blogger -p 3000:3000 --restart=always lazy-blogger
-```
-7️⃣ Verify
-```
-curl http://127.0.0.1:3000
-```
-- Should return your app’s HTML or JSON.
+3. Deploy:
 
-Then open your browser:
+```bash
+docker compose pull
+docker compose up -d --remove-orphans
 ```
-https://lazy-blogger.cyrildavelegaspi.online/
-```
-8️⃣ Optional: Let’s Encrypt SSL
-Install Certbot (if not already):
-```
-sudo apt install certbot python3-certbot-nginx -y
-```
-Obtain certificate:
-```
-sudo certbot --nginx -d lazy-blogger.cyrildavelegaspi.online
-```
-Certbot will automatically update your Nginx config for SSL and redirect HTTP → HTTPS.
 
-✅ Now your lazy-blogger app is running securely via Nginx, either manually or inside Docker.
+4. The app should be accessible via your VPS IP or domain.
+
+---
+
+## CI/CD Setup (GitHub Actions)
+
+1. Add secrets in GitHub:
+
+```
+DOCKER_HUB_USERNAME
+DOCKER_HUB_PASSWORD
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SECRET_KEY
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+VPS_HOST
+VPS_USER
+VPS_SSH_KEY
+VPS_SSH_PORT
+```
+
+2. Example `.github/workflows/deploy.yml`:
+
+```yaml
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            cyrillegs/lazy-blogger:latest
+          build-args: |
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+            CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: SSH and deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          script: |
+            cd ~/docker/lazy-blogger
+            docker compose pull
+            docker compose up -d --remove-orphans
+```
+
+> This workflow builds the Docker image, pushes it to Docker Hub, and deploys the latest image to your VPS.
+
+---
+
+## Notes
+
+- The **latest tag** is used in production for automatic updates.
+- Old Docker images on VPS can be cleaned with:
+
+```bash
+docker image prune -f
+```
+
+- The `.env` file must exist on the VPS for runtime environment variables.
+
+---
+
+## References
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Docker Docs](https://docs.docker.com/)
+- [GitHub Actions](https://docs.github.com/en/actions)
+- [Clerk Documentation](https://clerk.com/docs)
+- [Supabase Documentation](https://supabase.com/docs)
