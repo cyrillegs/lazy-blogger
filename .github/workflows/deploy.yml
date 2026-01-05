@@ -51,5 +51,5 @@ jobs:
             # Recreate containers with the updated image
             docker compose up -d --remove-orphans
 
-            # Optional: clean up old images
+            # Optional: Clean up old images
             docker image prune -f
